@@ -201,7 +201,7 @@ mod tests {
     fn can_do_full_edit_of_a_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
         let mut file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), &Rc::new("java".to_string()), &Rc::clone(&java));
-        file.update(&[ FileResourceChange::Full("class Y {}".to_string()) ]);
+        file.update(&[ Full("class Y {}".to_string()) ]);
 
         assert_eq!("class Y {}", file.source);
     }
