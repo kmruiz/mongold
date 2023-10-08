@@ -8,13 +8,10 @@ use tree_sitter::Tree;
 use url::Url;
 
 use dialect_interface::{DialectParser, FileResource, FileResourceChange, FileResourceChangeRange};
+use crate::dialect_resolver::DialectResolver;
 
 pub struct Workspace {
     open_files: HashMap<Url, RefCell<FileResource>>,
-}
-
-trait DialectResolver {
-    fn resolve_dialect(&self, language_id: &String) -> Option<Rc<dyn DialectParser>>;
 }
 
 impl Workspace {
@@ -26,7 +23,7 @@ impl Workspace {
 
     pub fn open(&mut self, params: &DidOpenTextDocumentParams, resolver: Rc<dyn DialectResolver>) -> Option<RefCell<Tree>> {
         let url = &params.text_document.uri;
-        return match resolver.resolve_dialect(&params.text_document.language_id) {
+        return match resolver.resolve_dialect(&params.text_document.language_id, &params.text_document.text) {
             Some(dialect) => {
                 let resource = FileResource::new(url.clone(), &params.text_document.text, Rc::new(params.text_document.language_id.clone()), Rc::clone(&dialect));
                 self.open_files.insert(url.clone(), resource.clone());
@@ -97,7 +94,7 @@ mod tests {
     }
 
     impl DialectResolver for Java {
-        fn resolve_dialect(&self, language_id: &String) -> Option<Rc<dyn DialectParser>> {
+        fn resolve_dialect(&self, language_id: &String, _contents: &String) -> Option<Rc<dyn DialectParser>> {
             return Some(Rc::new(Java::new()));
         }
     }

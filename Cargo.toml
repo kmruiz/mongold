@@ -11,6 +11,7 @@ tracing-subscriber = { workspace = true }
 directories = { workspace = true }
 build-info = { workspace = true }
 dialect-interface = { path = "dialect-interface" }
+language-server = { path = "language-server" }
 
 ######## Workspace Configuration ########
 [workspace]
