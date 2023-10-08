@@ -257,6 +257,13 @@ dependencies = [
 [[package]]
 name = "dialect-java-driver"
 version = "0.1.0"
+dependencies = [
+ "dialect-interface",
+ "mongodb-query-language",
+ "tracing",
+ "tree-sitter",
+ "tree-sitter-java",
+]
 
 [[package]]
 name = "dialect-javascript-driver"
@@ -491,6 +498,9 @@ checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
 [[package]]
 name = "mongodb-query-language"
 version = "0.1.0"
+dependencies = [
+ "tree-sitter",
+]
 
 [[package]]
 name = "mongodb-universe"
