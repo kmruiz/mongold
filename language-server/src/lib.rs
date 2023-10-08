@@ -1,10 +1,11 @@
 use std::cell::RefCell;
 use std::error::Error;
 use std::rc::Rc;
+
 use lsp_server::{Connection, ExtractError, IoThreads, Message, Notification, Request, RequestId};
 use lsp_types::{DiagnosticOptions, DiagnosticServerCapabilities, OneOf, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, WorkDoneProgressOptions};
 use lsp_types::notification::{DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument};
-use tracing::info;
+
 use crate::dialect_resolver::{DialectResolver, LanguageBasedDialectResolver};
 use crate::workspace::Workspace;
 
@@ -69,7 +70,7 @@ fn main_connection_loop(connection: Connection, workspace: RefCell<Workspace>, r
             Message::Notification(notification) => {
                 match cast_notification::<DidOpenTextDocument>(&notification) {
                     Ok(params) => {
-                        let Some(file) = workspace.borrow_mut().open(&params, Rc::clone(&resolver)) else {
+                        let Some(_file) = workspace.borrow_mut().open(&params, Rc::clone(&resolver)) else {
                             continue;
                         };
                     },
@@ -79,7 +80,7 @@ fn main_connection_loop(connection: Connection, workspace: RefCell<Workspace>, r
 
                 match cast_notification::<DidChangeTextDocument>(&notification) {
                     Ok(params) => {
-                        let Some(file) = workspace.borrow_mut().update(&params) else {
+                        let Some(_file) = workspace.borrow_mut().update(&params) else {
                             continue;
                         };
                     },
@@ -94,7 +95,7 @@ fn main_connection_loop(connection: Connection, workspace: RefCell<Workspace>, r
                 }
             }
 
-            Message::Response(response) => {
+            Message::Response(_response) => {
 
             }
         }

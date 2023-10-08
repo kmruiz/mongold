@@ -19,7 +19,7 @@ impl LanguageBasedDialectResolver {
 }
 
 impl DialectResolver for LanguageBasedDialectResolver {
-    fn resolve_dialect(&self, language_id: &String, contents: &String) -> Option<Rc<dyn DialectParser>> {
+    fn resolve_dialect(&self, language_id: &String, _contents: &String) -> Option<Rc<dyn DialectParser>> {
         return match self.resolvers.get(language_id.as_str()) {
             Some(parser) => Some(Rc::clone(parser)),
             None => None
