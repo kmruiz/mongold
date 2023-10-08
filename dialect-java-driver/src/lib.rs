@@ -35,7 +35,7 @@ impl ExecutionProcessor for Java {
 impl DialectParser for Java {
     fn full_parse(&self, contents: &String) -> RefCell<Tree> {
         let Some(tree) = self.parser.borrow_mut().parse(contents, None) else {
-            panic!("At full parse");
+            todo!("full_parse error handling.")
         };
 
         return RefCell::new(tree);
@@ -43,7 +43,7 @@ impl DialectParser for Java {
 
     fn reparse(&self, contents: &String, original: RefCell<Tree>) -> RefCell<Tree> {
         let Some(tree) = self.parser.borrow_mut().parse(contents, Some(&*original.borrow())) else {
-            panic!("At reparse");
+            todo!("reparse error handling.")
         };
 
         return RefCell::new(tree);

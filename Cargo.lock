@@ -445,10 +445,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "linting-engine"
-version = "0.1.0"
-
-[[package]]
 name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -495,6 +491,14 @@ name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
+
+[[package]]
+name = "mogodb-linting-engine"
+version = "0.1.0"
+
+[[package]]
+name = "mongodb-autocompletion"
+version = "0.1.0"
 
 [[package]]
 name = "mongodb-query-language"

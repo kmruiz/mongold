@@ -20,7 +20,8 @@ members = [
     "dialect-java-driver",
     "dialect-javascript-driver",
     "language-server",
-    "linting-engine",
+    "mongodb-autocompletion",
+    "mongodb-linting-engine",
     "mongodb-universe",
     "mongodb-query-language",
 ]
