@@ -397,6 +397,7 @@ name = "language-server"
 version = "0.1.0"
 dependencies = [
  "dialect-interface",
+ "dialect-java-driver",
  "lsp-server",
  "lsp-types",
  "serde",

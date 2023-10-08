@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 use dialect_interface::DialectParser;
+use dialect_java_driver::Java;
 
 pub struct LanguageBasedDialectResolver {
     resolvers: HashMap<&'static str, Rc<dyn DialectParser>>
@@ -12,8 +13,11 @@ pub trait DialectResolver {
 
 impl LanguageBasedDialectResolver {
     pub fn new() -> Rc<dyn DialectResolver> {
+        let mut resolvers = HashMap::new();
+        resolvers.insert("java", Java::new());
+
         return Rc::new(LanguageBasedDialectResolver {
-            resolvers: HashMap::new()
+            resolvers
         })
     }
 }
