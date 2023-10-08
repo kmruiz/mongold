@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell};
 use std::cmp::{max, min};
 use std::rc::Rc;
 
@@ -18,18 +18,33 @@ struct FileResourceChangeRangePosition {
     column: usize
 }
 
-struct FileResourceChangeRange {
+pub struct FileResourceChangeRange {
     start: FileResourceChangeRangePosition,
     end: FileResourceChangeRangePosition
 }
 
-enum FileResourceChange {
+impl FileResourceChangeRange {
+    pub fn new(start_line: usize, start_col: usize, end_line: usize, end_col: usize) -> FileResourceChangeRange {
+        return FileResourceChangeRange {
+            start: FileResourceChangeRangePosition {
+                row: start_line,
+                column: start_col
+            },
+            end: FileResourceChangeRangePosition {
+                row: end_line,
+                column: end_col
+            }
+        }
+    }
+}
+
+pub enum FileResourceChange {
     Range(FileResourceChangeRange, String),
     Full(String)
 }
 
 #[derive(Clone)]
-struct FileResource {
+pub struct FileResource {
     id: FileResourceId,
     language: Rc<String>,
     source: String,
@@ -37,7 +52,7 @@ struct FileResource {
     parser: Rc<dyn DialectParser>
 }
 
-trait DialectParser {
+pub trait DialectParser {
     fn full_parse(&self, contents: &String) -> RefCell<Tree>;
     fn reparse(&self, contents: &String, original: RefCell<Tree>) -> RefCell<Tree>;
 }
@@ -116,18 +131,18 @@ fn apply_changes_to_string(contents: &String, changes: &[FileResourceChange]) ->
 }
 
 impl FileResource {
-    pub fn new(url: Url, contents: &String, language_id: &Rc<String>, parser: &Rc<dyn DialectParser>) -> Box<FileResource> {
+    pub fn new(url: Url, contents: &String, language_id: Rc<String>, parser: Rc<dyn DialectParser>) -> RefCell<FileResource> {
         let base_tree = parser.full_parse(contents);
 
-        return Box::new(FileResource {
+        return RefCell::new(FileResource {
             id: FileResourceId {
                 url,
                 version: 1
             },
-            language: Rc::clone(language_id),
+            language: Rc::clone(&language_id),
             source: contents.to_owned(),
             tree: base_tree,
-            parser: Rc::clone(parser)
+            parser: Rc::clone(&parser)
         });
     }
 
@@ -147,11 +162,15 @@ impl FileResource {
 
         return Box::new(self.clone());
     }
+
+    pub fn tree(&self) -> RefCell<Tree> {
+        return RefCell::clone(&self.tree);
+
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
     use tree_sitter::Parser;
 
     use super::*;
@@ -192,24 +211,24 @@ mod tests {
     #[test]
     fn can_parse_fully_a_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
-        let file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), &Rc::new("java".to_string()), &Rc::clone(&java));
+        let file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), Rc::new("java".to_string()), Rc::clone(&java));
 
-        assert_eq!("class MyClass {}", file.source);
+        assert_eq!("class MyClass {}", file.borrow().source);
     }
 
     #[test]
     fn can_do_full_edit_of_a_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
-        let mut file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), &Rc::new("java".to_string()), &Rc::clone(&java));
-        file.update(&[ Full("class Y {}".to_string()) ]);
+        let file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), Rc::new("java".to_string()), Rc::clone(&java));
+        file.borrow_mut().update(&[ Full("class Y {}".to_string()) ]);
 
-        assert_eq!("class Y {}", file.source);
+        assert_eq!("class Y {}", file.borrow().source);
     }
 
     #[test]
     fn can_do_an_incrementa_edit_of_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
-        let mut file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), &Rc::new("java".to_string()), &Rc::clone(&java));
+        let file = FileResource::new(Url::parse("file://ws/test.java").unwrap(), &"class MyClass {}".to_string(), Rc::new("java".to_string()), Rc::clone(&java));
         let start = FileResourceChangeRangePosition {
             column: 15,
             row: 0
@@ -222,8 +241,8 @@ mod tests {
 
         let change = Range(FileResourceChangeRange { start, end }, "private int X;".to_string());
 
-        file.update(&[ change ]);
+        file.borrow_mut().update(&[ change ]);
 
-        assert_eq!("class MyClass {private int X;}", file.source);
+        assert_eq!("class MyClass {private int X;}", file.borrow().source);
     }
 }

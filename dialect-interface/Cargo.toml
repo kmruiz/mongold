@@ -10,5 +10,4 @@ url = { workspace = true }
 tree-sitter = { workspace = true }
 
 [dev-dependencies]
-pretty_assertions = "1.4.0"
 tree-sitter-java = "0.20.2"
