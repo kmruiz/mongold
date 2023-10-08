@@ -6,4 +6,5 @@ pub enum Value {
     Date(i64),
     Object(Vec<(String, Value)>),
     Array(Vec<Value>),
+    ObjectId(String),
 }
