@@ -448,6 +448,7 @@ version = "0.1.0"
 dependencies = [
  "dialect-interface",
  "mongodb-query-language",
+ "regex",
  "tracing",
  "tree-sitter",
  "tree-sitter-java",

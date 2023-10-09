@@ -7,6 +7,7 @@ use mongodb_query_language::execution::{Execution, ExecutionProcessor};
 use crate::use_cases::find_one::find_one;
 
 mod use_cases;
+mod tree_ext;
 
 pub struct Java {
     parser: RefCell<Parser>
@@ -24,9 +25,9 @@ impl Java {
 }
 
 impl ExecutionProcessor for Java {
-    fn process(tree: Rc<Tree>) -> Result<Vec<Execution>, Box<dyn Error + Sync + Send>> {
+    fn process(tree: RefCell<Tree>, code: &String) -> Result<Vec<Execution>, Box<dyn Error + Sync + Send>> {
         let mut result = vec![];
-        result.append(&mut find_one(tree)?);
+        result.append(&mut find_one(tree, code)?);
 
         return Ok(result);
     }

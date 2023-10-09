@@ -1,3 +1,4 @@
+#[derive(PartialEq, Debug)]
 pub enum Value {
     String(String),
     Integer(i32),
@@ -7,4 +8,5 @@ pub enum Value {
     Object(Vec<(String, Value)>),
     Array(Vec<Value>),
     ObjectId(String),
+    Reference(String, String)
 }

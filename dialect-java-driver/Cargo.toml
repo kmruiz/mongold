@@ -9,3 +9,4 @@ tree-sitter = { workspace = true }
 tree-sitter-java = "0.20.2"
 dialect-interface = { path = "../dialect-interface" }
 mongodb-query-language = { path = "../mongodb-query-language" }
+regex = { workspace = true }

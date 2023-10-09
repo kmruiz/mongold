@@ -40,6 +40,7 @@ directories = "5.0.1"
 build-info = "0.0.33"
 tree-sitter = "0.20.10"
 test-case = "3.2.1"
+regex = "1.9.6"
 
 ######## Build Configuration ########
 [build-dependencies]
