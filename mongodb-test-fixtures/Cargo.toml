@@ -1,8 +1,9 @@
 [package]
-name = "mongodb-universe"
+name = "mongodb-test-fixtures"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-mongodb-query-language = { path = "../mongodb-query-language" }
 mongodb = { workspace = true }
+testcontainers = "0.15.0"
+test-case = "3.2.1"

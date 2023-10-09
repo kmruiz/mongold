@@ -1,13 +1,25 @@
+use std::error::Error;
+use mongodb::bson::Document;
+use mongodb::Namespace;
 use mongodb_query_language::values::Value;
 
 pub enum SchemaRegularIndexPredicate {
     Ascending(String),
     Descending(String),
     Text(String),
-    Wildcard(String)
+    Unknown(String, String),
 }
 
 pub struct SchemaRegularIndex {
-    name: String,
-    predicates: Vec<SchemaRegularIndexPredicate>,
+    pub name: String,
+    pub predicates: Vec<SchemaRegularIndexPredicate>,
+}
+
+pub struct Schema {
+    pub regular_indexes: Vec<SchemaRegularIndex>,
+    pub samples: Vec<Document>
+}
+
+pub trait InferSchema {
+    fn infer_schema(&self, namespace: &Namespace) -> Result<Schema, Box<dyn Error + Send + Sync>>;
 }

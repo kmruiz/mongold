@@ -22,6 +22,7 @@ members = [
     "language-server",
     "mongodb-autocompletion",
     "mongodb-linting-engine",
+    "mongodb-test-fixtures",
     "mongodb-universe",
     "mongodb-query-language",
 ]

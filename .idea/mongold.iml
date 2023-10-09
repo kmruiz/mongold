@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/mongodb-autocompletion/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/mongodb-linting-engine/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/mongodb-query-language/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/mongodb-test-fixtures/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/mongodb-universe/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
