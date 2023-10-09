@@ -15,11 +15,8 @@ jobs:
     steps:
       - name: Setup
         uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          components: rustfmt, clippy
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Build
         run: cargo build --verbose --all
       - name: Test
