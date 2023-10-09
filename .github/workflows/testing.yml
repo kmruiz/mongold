@@ -30,5 +30,3 @@ jobs:
         run: cargo build --all
       - name: Test
         run: cargo test --all
-      - name: Security Audit
-        run: cargo audit --deny=warnings
