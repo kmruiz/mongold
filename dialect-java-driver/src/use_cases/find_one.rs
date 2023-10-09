@@ -5,7 +5,6 @@ use tree_sitter::{Node, Tree};
 
 use mongodb_query_language::execution::{Execution, ExecutionNamespace};
 use mongodb_query_language::execution::Execution::FindOne;
-use mongodb_query_language::filter::FilterOperator::Equals;
 use mongodb_query_language::values::Value::Reference;
 
 use crate::tree_ext::infer_mongodb_namespace::infer_mongodb_namespace;
