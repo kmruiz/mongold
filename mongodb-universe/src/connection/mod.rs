@@ -56,7 +56,6 @@ fn merge_document(left: &Document, right: &Document) -> Document {
             result.insert(key, vec! [ lval ]);
         }
 
-
         parsed_keys.insert(key);
     }
 
