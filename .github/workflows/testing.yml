@@ -22,8 +22,10 @@ jobs:
           override: true
       - name: Format
         run: cargo fmt --all --message-format=human --check
-      - name: Lint
-        run: cargo clippy --all
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
       - name: Build
         run: cargo build --all
       - name: Test
