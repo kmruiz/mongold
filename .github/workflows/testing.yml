@@ -13,10 +13,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup
-        uses: actions-rs/toolchain@v1
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup
+        uses: actions-rs/toolchain@v1
       - name: Build
         run: cargo build --verbose --all
       - name: Test
