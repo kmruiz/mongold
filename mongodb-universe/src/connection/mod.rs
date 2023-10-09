@@ -106,8 +106,6 @@ impl InferSchema for Client {
             }
         }
 
-        println!("{:?}", normalized);
-
         return Ok(Schema {
             regular_indexes,
             samples,
