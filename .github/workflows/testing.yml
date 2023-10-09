@@ -27,4 +27,4 @@ jobs:
       - name: Test
         run: cargo test --verbose --all
       - name: Security Audit
-        run: cargo install cargo-audit && cargo audit --deny=warnings
+        run: cargo audit --deny=warnings
