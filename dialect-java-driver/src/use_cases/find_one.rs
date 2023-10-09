@@ -10,6 +10,7 @@ use mongodb_query_language::values::Value::Reference;
 use crate::tree_ext::infer_mongodb_namespace::infer_mongodb_namespace;
 use crate::tree_ext::optional_node_to_string;
 use crate::tree_ext::predicate_from_driver_method::predicate_from_driver_method;
+use crate::tree_ext::friendly_capture::{FriendlyCapture};
 
 const ALL_FIND_METHOD_CALLS: &str = include_str!("queries/find_one.all_finds.scm");
 const ALL_FIND_METHOD_CALLS_ARGUMENT_LIST: &str = include_str!("queries/find_one.all_finds.argument_list.scm");
@@ -32,34 +33,20 @@ pub fn find_one(tree: RefCell<Tree>, code: &String) -> Result<Vec<Execution>, Bo
     let mut result: Vec<Execution> = vec![];
 
     for each_match in all_matches {
-        let mut coll_node: Option<Node> = None;
-        let mut arg_list_node: Option<Node> = None;
-
-        for capture in each_match.captures {
-            if capture.index == collection_idx {
-                coll_node = Some(capture.node);
-            } else if capture.index == arglist_idx {
-                arg_list_node = Some(capture.node);
-            }
-        }
-
+        let [ coll_node, arg_list_node ] = &each_match.capture(vec![ collection_idx, arglist_idx ])[..] else { break };
         let mut arg_cursor = tree_sitter::QueryCursor::new();
         let all_predicates = arg_cursor.matches(&all_predicates_query, arg_list_node.unwrap(), code.as_bytes());
 
         for each_predicate in all_predicates {
-            let mut field_name_node: Option<Node> = None;
-            let mut operation_node: Option<Node> = None;
-            let mut value_node: Option<Node> = None;
-
-            for inner_arg_capture in each_predicate.captures {
-                if inner_arg_capture.index == field_idx {
-                    field_name_node = Some(inner_arg_capture.node);
-                } else if inner_arg_capture.index == method_idx {
-                    operation_node = Some(inner_arg_capture.node);
-                } else if inner_arg_capture.index == value_idx {
-                    value_node = Some(inner_arg_capture.node);
-                }
-            }
+            let [
+                field_name_node,
+                operation_node,
+                value_node
+            ] = &each_predicate.capture(vec![
+                field_idx,
+                method_idx,
+                value_idx
+            ])[..] else { break };
 
             let coll_field_name = optional_node_to_string(&coll_node, code);
             let query_field_name = optional_node_to_string(&field_name_node, code);
