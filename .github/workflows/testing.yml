@@ -11,12 +11,16 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
+      - name: Setup
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt, clippy
       - uses: actions/checkout@v3
       - name: Build
         run: cargo build --verbose --all
-      - name: Run tests
+      - name: Test
         run: cargo test --verbose --all
