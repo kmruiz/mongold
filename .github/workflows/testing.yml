@@ -18,6 +18,7 @@ jobs:
       - name: Setup
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: nightly
           override: true
       - name: Lint
         run: cargo clippy
