@@ -1,8 +1,12 @@
+use std::collections::HashSet;
 use std::error::Error;
-use std::rc::Rc;
+use std::fmt::format;
+
 use mongodb::{IndexModel, Namespace};
-use mongodb::bson::{doc, Document};
+use mongodb::bson::{Bson, doc, Document};
+use mongodb::bson::Bson::Array;
 use mongodb::sync::{Client, Collection};
+
 use crate::schema::{InferSchema, Schema, SchemaRegularIndex};
 use crate::schema::SchemaRegularIndexPredicate::{Ascending, Descending, Text, Unknown};
 
@@ -36,6 +40,48 @@ fn map_regular_index(model: IndexModel) -> SchemaRegularIndex {
     };
 }
 
+fn merge_document(left: &Document, right: &Document) -> Document {
+    let mut parsed_keys: HashSet<&String> = HashSet::new();
+    let mut result = doc! {};
+
+    for key in left.keys() {
+        let lval = left.get(key).unwrap_or(&Bson::Null);
+        let rval = right.get(key).unwrap_or(&Bson::Null);
+
+        if lval.as_document() != None && rval.as_document() != None {
+            result.insert(key, merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()));
+        } else if lval != rval {
+            result.insert(key, vec! [ lval, rval ]);
+        } else {
+            result.insert(key, vec! [ lval ]);
+        }
+
+
+        parsed_keys.insert(key);
+    }
+
+    for key in right.keys() {
+        if parsed_keys.contains(key) {
+            continue;
+        }
+
+        let lval = left.get(key).unwrap_or(&Bson::Null);
+        let rval = right.get(key).unwrap_or(&Bson::Null);
+
+        if lval.as_document() != None && rval.as_document() != None {
+            result.insert(key, merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()));
+        } else if lval != rval {
+            result.insert(key, vec! [ lval, rval ]);
+        } else {
+            result.insert(key, vec! [ lval ]);
+        }
+
+        parsed_keys.insert(key);
+    }
+
+    return result;
+}
+
 impl InferSchema for Client {
     fn infer_schema(&self, namespace: &Namespace) -> Result<Schema, Box<dyn Error + Send + Sync>> {
         let db = self.database(namespace.db.as_str());
@@ -53,21 +99,34 @@ impl InferSchema for Client {
             "$sort": { "_id": 1 },
         }], None)?.map(|r| { r.unwrap() }).collect();
 
+        let mut normalized = doc![];
+        if samples.len() > 0 {
+            normalized = samples[0].clone();
+            for sample in &samples[1..] {
+                normalized = merge_document(&normalized, &sample);
+            }
+        }
+
+        println!("{:?}", normalized);
+
         return Ok(Schema {
             regular_indexes,
-            samples
+            samples,
+            normalized
         })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use test_case::test_case;
-    use mongodb::bson::{doc, Document};
     use mongodb::{IndexModel, Namespace};
+    use mongodb::bson::{Bson, doc};
     use mongodb::sync::Client;
+    use test_case::test_case;
+
     use mongodb_test_fixtures::MongoDBSandbox;
     use mongodb_test_fixtures::version::MongoDBVersion;
+
     use crate::schema::{InferSchema, SchemaRegularIndex};
     use crate::schema::SchemaRegularIndexPredicate::Ascending;
 
@@ -80,6 +139,7 @@ mod tests {
                 doc! {
                     "indexed": true
                 }, doc! {
+                    "indexed": true,
                     "not_indexed": false
                 }
             ])
@@ -99,6 +159,12 @@ mod tests {
             assert_eq!(schema.samples.len(), 2);
             assert_eq!(schema.samples[0].get_bool("indexed").unwrap(), true);
             assert_eq!(schema.samples[1].get_bool("not_indexed").unwrap(), false);
+
+            assert_eq!(schema.normalized.get_array("indexed").unwrap()[0].as_bool(), Some(true));
+            assert_eq!(schema.normalized.get_array("indexed").unwrap().len(), 1);
+
+            assert_eq!(schema.normalized.get_array("not_indexed").unwrap()[0], Bson::Null);
+            assert_eq!(schema.normalized.get_array("not_indexed").unwrap()[1].as_bool(), Some(false));
         });
     }
 }
