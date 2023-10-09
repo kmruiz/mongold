@@ -1,15 +1,19 @@
+use crate::tree_ext::optional_node_to_string;
+use mongodb_query_language::execution::ExecutionNamespace;
+use regex::Regex;
 use std::collections::HashMap;
 use std::error::Error;
 use tree_sitter::Node;
-use mongodb_query_language::execution::ExecutionNamespace;
-use regex::Regex;
-use crate::tree_ext::optional_node_to_string;
 
 const COLLECTION_WITH_NAMESPACE: &str = include_str!("queries/collection_with_namespace.scm");
 
-pub fn infer_mongodb_namespace(root: Node, code: &String) -> Result<HashMap<String, ExecutionNamespace>, Box<dyn Error + Sync + Send>> {
+pub fn infer_mongodb_namespace(
+    root: Node,
+    code: &String,
+) -> Result<HashMap<String, ExecutionNamespace>, Box<dyn Error + Sync + Send>> {
     let mut result: HashMap<String, ExecutionNamespace> = HashMap::new();
-    let collections_query = tree_sitter::Query::new(tree_sitter_java::language(), COLLECTION_WITH_NAMESPACE)?;
+    let collections_query =
+        tree_sitter::Query::new(tree_sitter_java::language(), COLLECTION_WITH_NAMESPACE)?;
     let mut cursor = tree_sitter::QueryCursor::new();
 
     let all_matches = cursor.matches(&collections_query, root, code.as_bytes());
@@ -35,13 +39,15 @@ pub fn infer_mongodb_namespace(root: Node, code: &String) -> Result<HashMap<Stri
         if let Some(capture) = captures {
             if capture.len() == 3 {
                 let field_name = optional_node_to_string(&field_name_node, code);
-                result.insert(field_name.clone(), ExecutionNamespace {
-                    database: capture.get(1).map(|x| x.as_str().to_string()),
-                    collection: capture.get(2).map(|x| x.as_str().to_string()),
-                    reference_name: field_name,
-                });
+                result.insert(
+                    field_name.clone(),
+                    ExecutionNamespace {
+                        database: capture.get(1).map(|x| x.as_str().to_string()),
+                        collection: capture.get(2).map(|x| x.as_str().to_string()),
+                        reference_name: field_name,
+                    },
+                );
             }
-
         }
     }
 

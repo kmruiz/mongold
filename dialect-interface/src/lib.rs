@@ -8,39 +8,44 @@ use crate::FileResourceChange::{Full, Range};
 
 struct FileResourceChangeRangePosition {
     row: usize,
-    column: usize
+    column: usize,
 }
 
 pub struct FileResourceChangeRange {
     start: FileResourceChangeRangePosition,
-    end: FileResourceChangeRangePosition
+    end: FileResourceChangeRangePosition,
 }
 
 impl FileResourceChangeRange {
-    pub fn new(start_line: usize, start_col: usize, end_line: usize, end_col: usize) -> FileResourceChangeRange {
+    pub fn new(
+        start_line: usize,
+        start_col: usize,
+        end_line: usize,
+        end_col: usize,
+    ) -> FileResourceChangeRange {
         return FileResourceChangeRange {
             start: FileResourceChangeRangePosition {
                 row: start_line,
-                column: start_col
+                column: start_col,
             },
             end: FileResourceChangeRangePosition {
                 row: end_line,
-                column: end_col
-            }
-        }
+                column: end_col,
+            },
+        };
     }
 }
 
 pub enum FileResourceChange {
     Range(FileResourceChangeRange, String),
-    Full(String)
+    Full(String),
 }
 
 #[derive(Clone)]
 pub struct FileResource {
     source: String,
     tree: RefCell<Tree>,
-    parser: Rc<dyn DialectParser>
+    parser: Rc<dyn DialectParser>,
 }
 
 pub trait DialectParser {
@@ -48,7 +53,7 @@ pub trait DialectParser {
     fn reparse(&self, contents: &String, original: RefCell<Tree>) -> RefCell<Tree>;
 }
 
-fn resolve_byte_position(contents: &String, points: [&Point;3]) -> [usize;3] {
+fn resolve_byte_position(contents: &String, points: [&Point; 3]) -> [usize; 3] {
     let mut pos: [usize; 3] = [0, 0, 0];
     let mut row: usize = 0;
     let mut col: usize = 0;
@@ -83,11 +88,23 @@ fn resolve_byte_position(contents: &String, points: [&Point;3]) -> [usize;3] {
     return pos;
 }
 
-fn apply_changes_to_string(contents: &String, changes: &[FileResourceChange]) -> (Option<InputEdit>, String) {
+fn apply_changes_to_string(
+    contents: &String,
+    changes: &[FileResourceChange],
+) -> (Option<InputEdit>, String) {
     let mut result = contents.clone();
-    let mut start_position = Point { row: usize::MAX, column: usize::MAX };
-    let mut old_end_position = Point { row: usize::MIN, column: usize::MIN };
-    let mut new_end_position = Point { row: usize::MIN, column: usize::MIN };
+    let mut start_position = Point {
+        row: usize::MAX,
+        column: usize::MAX,
+    };
+    let mut old_end_position = Point {
+        row: usize::MIN,
+        column: usize::MIN,
+    };
+    let mut new_end_position = Point {
+        row: usize::MIN,
+        column: usize::MIN,
+    };
     let mut start_byte: usize = 0;
     let mut old_end_byte: usize = 0;
     let mut new_end_byte: usize = 0;
@@ -101,24 +118,33 @@ fn apply_changes_to_string(contents: &String, changes: &[FileResourceChange]) ->
             old_end_position.column = max(old_end_position.column, boundaries.end.column);
 
             new_end_position.row = max(new_end_position.row, start_position.row + new_text.len());
-            new_end_position.column = max(new_end_position.column, start_position.column + new_text.len());
+            new_end_position.column = max(
+                new_end_position.column,
+                start_position.column + new_text.len(),
+            );
 
-            [start_byte, old_end_byte, new_end_byte] = resolve_byte_position(contents, [&start_position, &old_end_position, &new_end_position]);
+            [start_byte, old_end_byte, new_end_byte] = resolve_byte_position(
+                contents,
+                [&start_position, &old_end_position, &new_end_position],
+            );
 
-            result.replace_range(start_byte ..= old_end_byte, new_text.as_str());
+            result.replace_range(start_byte..=old_end_byte, new_text.as_str());
         } else if let Full(edit) = change {
             return (None, edit.clone());
         }
     }
 
-    return (Some(InputEdit {
-        start_byte,
-        old_end_byte,
-        new_end_byte,
-        start_position,
-        old_end_position,
-        new_end_position,
-    }), result)
+    return (
+        Some(InputEdit {
+            start_byte,
+            old_end_byte,
+            new_end_byte,
+            start_position,
+            old_end_position,
+            new_end_position,
+        }),
+        result,
+    );
 }
 
 impl FileResource {
@@ -128,7 +154,7 @@ impl FileResource {
         return RefCell::new(FileResource {
             source: contents.to_owned(),
             tree: base_tree,
-            parser: Rc::clone(&parser)
+            parser: Rc::clone(&parser),
         });
     }
 
@@ -151,7 +177,6 @@ impl FileResource {
 
     pub fn tree(&self) -> RefCell<Tree> {
         return RefCell::clone(&self.tree);
-
     }
 }
 
@@ -162,17 +187,19 @@ mod tests {
     use super::*;
 
     struct Java {
-        parser: RefCell<Parser>
+        parser: RefCell<Parser>,
     }
 
     impl Java {
         fn new() -> Self {
             let mut parser = Parser::new();
-            parser.set_language(tree_sitter_java::language()).expect("Error loading Java grammar.");
+            parser
+                .set_language(tree_sitter_java::language())
+                .expect("Error loading Java grammar.");
 
             return Java {
-                parser: RefCell::new(parser)
-            }
+                parser: RefCell::new(parser),
+            };
         }
     }
 
@@ -186,7 +213,11 @@ mod tests {
         }
 
         fn reparse(&self, contents: &String, original: RefCell<Tree>) -> RefCell<Tree> {
-            let Some(tree) = self.parser.borrow_mut().parse(contents, Some(&*original.borrow())) else {
+            let Some(tree) = self
+                .parser
+                .borrow_mut()
+                .parse(contents, Some(&*original.borrow()))
+            else {
                 panic!("At reparse");
             };
 
@@ -206,7 +237,7 @@ mod tests {
     fn can_do_full_edit_of_a_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
         let file = FileResource::new(&"class MyClass {}".to_string(), Rc::clone(&java));
-        file.borrow_mut().update(&[ Full("class Y {}".to_string()) ]);
+        file.borrow_mut().update(&[Full("class Y {}".to_string())]);
 
         assert_eq!("class Y {}", file.borrow().source);
     }
@@ -215,19 +246,16 @@ mod tests {
     fn can_do_an_incrementa_edit_of_file() {
         let java: Rc<dyn DialectParser> = Rc::new(Java::new());
         let file = FileResource::new(&"class MyClass {}".to_string(), Rc::clone(&java));
-        let start = FileResourceChangeRangePosition {
-            column: 15,
-            row: 0
-        };
+        let start = FileResourceChangeRangePosition { column: 15, row: 0 };
 
-        let end = FileResourceChangeRangePosition {
-            column: 14,
-            row: 0
-        };
+        let end = FileResourceChangeRangePosition { column: 14, row: 0 };
 
-        let change = Range(FileResourceChangeRange { start, end }, "private int X;".to_string());
+        let change = Range(
+            FileResourceChangeRange { start, end },
+            "private int X;".to_string(),
+        );
 
-        file.borrow_mut().update(&[ change ]);
+        file.borrow_mut().update(&[change]);
 
         assert_eq!("class MyClass {private int X;}", file.borrow().source);
     }

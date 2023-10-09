@@ -20,6 +20,8 @@ jobs:
         with:
           toolchain: nightly
           override: true
+      - name: Format
+        run: cargo fmt --all --message-format=human --check
       - name: Lint
         run: cargo clippy
       - name: Build

@@ -1,15 +1,15 @@
 pub enum ClusterInsight {
     Version,
     Sharded,
-    Atlas
+    Atlas,
 }
 pub enum DatabaseInsight {
-    Sharded
+    Sharded,
 }
 pub enum CollectionInsight {
     Sharded,
     RegularIndexes,
     SearchIndexes,
     Capped,
-    TimeSeries
+    TimeSeries,
 }

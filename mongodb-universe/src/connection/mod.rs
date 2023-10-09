@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 use std::error::Error;
 
-use mongodb::{IndexModel, Namespace};
-use mongodb::bson::{Bson, doc, Document};
+use mongodb::bson::{doc, Bson, Document};
 use mongodb::sync::{Client, Collection};
+use mongodb::{IndexModel, Namespace};
 
-use crate::schema::{InferSchema, Schema, SchemaRegularIndex};
 use crate::schema::SchemaRegularIndexPredicate::{Ascending, Descending, Text, Unknown};
+use crate::schema::{InferSchema, Schema, SchemaRegularIndex};
 
 pub fn connect(url: String) -> Result<Client, Box<dyn Error + Sync + Send>> {
     let client = Client::with_uri_str(url)?;
@@ -16,11 +16,13 @@ pub fn connect(url: String) -> Result<Client, Box<dyn Error + Sync + Send>> {
 fn map_regular_index(model: IndexModel) -> SchemaRegularIndex {
     let predicates = model.keys.iter().map(|(key, value)| {
         match value.as_i32() {
-            Some(direction) => return match direction {
-                -1 => Descending(key.clone()),
-                1 => Ascending(key.clone()),
-                _ => Unknown(key.clone(), format!("{}", direction))
-            },
+            Some(direction) => {
+                return match direction {
+                    -1 => Descending(key.clone()),
+                    1 => Ascending(key.clone()),
+                    _ => Unknown(key.clone(), format!("{}", direction)),
+                }
+            }
             None => {}
         }
 
@@ -34,7 +36,7 @@ fn map_regular_index(model: IndexModel) -> SchemaRegularIndex {
 
     return SchemaRegularIndex {
         name: model.options.unwrap().name.unwrap(),
-        predicates: predicates.collect()
+        predicates: predicates.collect(),
     };
 }
 
@@ -47,11 +49,14 @@ fn merge_document(left: &Document, right: &Document) -> Document {
         let rval = right.get(key).unwrap_or(&Bson::Null);
 
         if lval.as_document() != None && rval.as_document() != None {
-            result.insert(key, merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()));
+            result.insert(
+                key,
+                merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()),
+            );
         } else if lval != rval {
-            result.insert(key, vec! [ lval, rval ]);
+            result.insert(key, vec![lval, rval]);
         } else {
-            result.insert(key, vec! [ lval ]);
+            result.insert(key, vec![lval]);
         }
 
         parsed_keys.insert(key);
@@ -66,11 +71,14 @@ fn merge_document(left: &Document, right: &Document) -> Document {
         let rval = right.get(key).unwrap_or(&Bson::Null);
 
         if lval.as_document() != None && rval.as_document() != None {
-            result.insert(key, merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()));
+            result.insert(
+                key,
+                merge_document(lval.as_document().unwrap(), rval.as_document().unwrap()),
+            );
         } else if lval != rval {
-            result.insert(key, vec! [ lval, rval ]);
+            result.insert(key, vec![lval, rval]);
         } else {
-            result.insert(key, vec! [ lval ]);
+            result.insert(key, vec![lval]);
         }
 
         parsed_keys.insert(key);
@@ -86,15 +94,24 @@ impl InferSchema for Client {
 
         let regular_indexes_from_mongodb = coll.list_indexes(None)?;
         let regular_indexes: Vec<SchemaRegularIndex> = regular_indexes_from_mongodb
-            .map(|r| { r.unwrap() })
+            .map(|r| r.unwrap())
             .map(map_regular_index)
             .collect();
 
-        let samples: Vec<Document> = coll.aggregate([doc! {
-            "$sample": { "size": 5 },
-        }, doc! {
-            "$sort": { "_id": 1 },
-        }], None)?.map(|r| { r.unwrap() }).collect();
+        let samples: Vec<Document> = coll
+            .aggregate(
+                [
+                    doc! {
+                        "$sample": { "size": 5 },
+                    },
+                    doc! {
+                        "$sort": { "_id": 1 },
+                    },
+                ],
+                None,
+            )?
+            .map(|r| r.unwrap())
+            .collect();
 
         let mut normalized = doc![];
         if samples.len() > 0 {
@@ -107,59 +124,86 @@ impl InferSchema for Client {
         return Ok(Schema {
             regular_indexes,
             samples,
-            normalized
-        })
+            normalized,
+        });
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use mongodb::{IndexModel, Namespace};
-    use mongodb::bson::{Bson, doc};
+    use mongodb::bson::{doc, Bson};
     use mongodb::sync::Client;
+    use mongodb::{IndexModel, Namespace};
     use test_case::test_case;
 
-    use mongodb_test_fixtures::MongoDBSandbox;
     use mongodb_test_fixtures::version::MongoDBVersion;
+    use mongodb_test_fixtures::MongoDBSandbox;
 
-    use crate::schema::{InferSchema, SchemaRegularIndex};
     use crate::schema::SchemaRegularIndexPredicate::Ascending;
+    use crate::schema::{InferSchema, SchemaRegularIndex};
 
     #[test_case(MongoDBVersion::V7 ; "version is 7")]
     #[test_case(MongoDBVersion::V6 ; "version is 6")]
     #[test_case(MongoDBVersion::V5 ; "version is 5")]
     fn resolves_schemas_on_any_supported_version_replicaset(version: MongoDBVersion) {
         MongoDBSandbox::new(version)
-            .insert("test.withIndexes", vec![
-                doc! {
-                    "indexed": true
-                }, doc! {
-                    "indexed": true,
-                    "not_indexed": false
-                }
-            ])
-            .create_index("test.withIndexes", vec! [
-                IndexModel::builder().keys(doc! { "indexed": 1 } ).build()
-            ]).run(|client: Client| {
-            let ns = Namespace::new("test", "withIndexes");
-            let schema = client.infer_schema(&ns).unwrap();
+            .insert(
+                "test.withIndexes",
+                vec![
+                    doc! {
+                        "indexed": true
+                    },
+                    doc! {
+                        "indexed": true,
+                        "not_indexed": false
+                    },
+                ],
+            )
+            .create_index(
+                "test.withIndexes",
+                vec![IndexModel::builder().keys(doc! { "indexed": 1 }).build()],
+            )
+            .run(|client: Client| {
+                let ns = Namespace::new("test", "withIndexes");
+                let schema = client.infer_schema(&ns).unwrap();
 
-            assert_eq!(schema.regular_indexes.len(), 2);
-            let id_index = &schema.regular_indexes[0];
-            let indexed_index = &schema.regular_indexes[1];
+                assert_eq!(schema.regular_indexes.len(), 2);
+                let id_index = &schema.regular_indexes[0];
+                let indexed_index = &schema.regular_indexes[1];
 
-            assert_eq!(id_index, &SchemaRegularIndex { name: "_id_".to_string(), predicates: vec![ Ascending("_id".to_string()) ]});
-            assert_eq!(indexed_index, &SchemaRegularIndex { name: "indexed_1".to_string(), predicates: vec![ Ascending("indexed".to_string()) ]});
+                assert_eq!(
+                    id_index,
+                    &SchemaRegularIndex {
+                        name: "_id_".to_string(),
+                        predicates: vec![Ascending("_id".to_string())]
+                    }
+                );
+                assert_eq!(
+                    indexed_index,
+                    &SchemaRegularIndex {
+                        name: "indexed_1".to_string(),
+                        predicates: vec![Ascending("indexed".to_string())]
+                    }
+                );
 
-            assert_eq!(schema.samples.len(), 2);
-            assert_eq!(schema.samples[0].get_bool("indexed").unwrap(), true);
-            assert_eq!(schema.samples[1].get_bool("not_indexed").unwrap(), false);
+                assert_eq!(schema.samples.len(), 2);
+                assert_eq!(schema.samples[0].get_bool("indexed").unwrap(), true);
+                assert_eq!(schema.samples[1].get_bool("not_indexed").unwrap(), false);
 
-            assert_eq!(schema.normalized.get_array("indexed").unwrap()[0].as_bool(), Some(true));
-            assert_eq!(schema.normalized.get_array("indexed").unwrap().len(), 1);
+                assert_eq!(
+                    schema.normalized.get_array("indexed").unwrap()[0].as_bool(),
+                    Some(true)
+                );
+                assert_eq!(schema.normalized.get_array("indexed").unwrap().len(), 1);
 
-            assert_eq!(schema.normalized.get_array("not_indexed").unwrap()[0], Bson::Null);
-            assert_eq!(schema.normalized.get_array("not_indexed").unwrap()[1].as_bool(), Some(false));
-        });
+                assert_eq!(
+                    schema.normalized.get_array("not_indexed").unwrap()[0],
+                    Bson::Null
+                );
+                assert_eq!(
+                    schema.normalized.get_array("not_indexed").unwrap()[1].as_bool(),
+                    Some(false)
+                );
+            });
     }
 }

@@ -4,7 +4,7 @@ use crate::version::MongoDBVersion::V7;
 pub enum MongoDBVersion {
     V7,
     V6,
-    V5
+    V5,
 }
 
 impl MongoDBVersion {
@@ -13,7 +13,7 @@ impl MongoDBVersion {
             MongoDBVersion::V7 => "7.0.2",
             MongoDBVersion::V6 => "6.0.10",
             MongoDBVersion::V5 => "5.0.21",
-        }
+        };
     }
 
     pub fn default() -> MongoDBVersion {

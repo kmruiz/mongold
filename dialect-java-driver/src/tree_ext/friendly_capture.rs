@@ -21,5 +21,4 @@ impl FriendlyCapture for QueryMatch<'_, '_> {
 
         return result;
     }
-
 }

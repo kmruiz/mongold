@@ -8,5 +8,5 @@ pub enum Value {
     Object(Vec<(String, Value)>),
     Array(Vec<Value>),
     ObjectId(String),
-    Reference(String, String)
+    Reference(String, String),
 }

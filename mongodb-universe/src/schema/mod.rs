@@ -20,7 +20,7 @@ pub struct SchemaRegularIndex {
 pub struct Schema {
     pub regular_indexes: Vec<SchemaRegularIndex>,
     pub samples: Vec<Document>,
-    pub normalized: Document
+    pub normalized: Document,
 }
 
 pub trait InferSchema {
