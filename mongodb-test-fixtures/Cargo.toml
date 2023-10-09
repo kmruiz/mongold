@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 mongodb = { workspace = true }
 testcontainers = "0.15.0"
-test-case = "3.2.1"
+test-case = { workspace = true }

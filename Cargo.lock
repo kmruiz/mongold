@@ -1081,6 +1081,8 @@ version = "0.1.0"
 dependencies = [
  "mongodb",
  "mongodb-query-language",
+ "mongodb-test-fixtures",
+ "test-case",
 ]
 
 [[package]]

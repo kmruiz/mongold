@@ -3,6 +3,7 @@ use mongodb::bson::Document;
 use mongodb::Namespace;
 use mongodb_query_language::values::Value;
 
+#[derive(Eq, PartialEq, Debug)]
 pub enum SchemaRegularIndexPredicate {
     Ascending(String),
     Descending(String),
@@ -10,6 +11,7 @@ pub enum SchemaRegularIndexPredicate {
     Unknown(String, String),
 }
 
+#[derive(Eq, PartialEq, Debug)]
 pub struct SchemaRegularIndex {
     pub name: String,
     pub predicates: Vec<SchemaRegularIndexPredicate>,

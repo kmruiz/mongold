@@ -48,7 +48,9 @@ impl InferSchema for Client {
             .collect();
 
         let samples: Vec<Document> = coll.aggregate([doc! {
-            "$sample": { "number": 5 }
+            "$sample": { "size": 5 },
+        }, doc! {
+            "$sort": { "_id": 1 },
         }], None)?.map(|r| { r.unwrap() }).collect();
 
         return Ok(Schema {
@@ -60,5 +62,43 @@ impl InferSchema for Client {
 
 #[cfg(test)]
 mod tests {
+    use test_case::test_case;
+    use mongodb::bson::{doc, Document};
+    use mongodb::{IndexModel, Namespace};
+    use mongodb::sync::Client;
+    use mongodb_test_fixtures::MongoDBSandbox;
+    use mongodb_test_fixtures::version::MongoDBVersion;
+    use crate::schema::{InferSchema, SchemaRegularIndex};
+    use crate::schema::SchemaRegularIndexPredicate::Ascending;
 
+    #[test_case(MongoDBVersion::V7 ; "version is 7")]
+    #[test_case(MongoDBVersion::V6 ; "version is 6")]
+    #[test_case(MongoDBVersion::V5 ; "version is 5")]
+    fn resolves_schemas_on_any_supported_version_replicaset(version: MongoDBVersion) {
+        MongoDBSandbox::new(version)
+            .insert("test.withIndexes", vec![
+                doc! {
+                    "indexed": true
+                }, doc! {
+                    "not_indexed": false
+                }
+            ])
+            .create_index("test.withIndexes", vec! [
+                IndexModel::builder().keys(doc! { "indexed": 1 } ).build()
+            ]).run(|client: Client| {
+            let ns = Namespace::new("test", "withIndexes");
+            let schema = client.infer_schema(&ns).unwrap();
+
+            assert_eq!(schema.regular_indexes.len(), 2);
+            let id_index = &schema.regular_indexes[0];
+            let indexed_index = &schema.regular_indexes[1];
+
+            assert_eq!(id_index, &SchemaRegularIndex { name: "_id_".to_string(), predicates: vec![ Ascending("_id".to_string()) ]});
+            assert_eq!(indexed_index, &SchemaRegularIndex { name: "indexed_1".to_string(), predicates: vec![ Ascending("indexed".to_string()) ]});
+
+            assert_eq!(schema.samples.len(), 2);
+            assert_eq!(schema.samples[0].get_bool("indexed").unwrap(), true);
+            assert_eq!(schema.samples[1].get_bool("not_indexed").unwrap(), false);
+        });
+    }
 }

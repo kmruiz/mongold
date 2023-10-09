@@ -11,7 +11,7 @@ use testcontainers::core::WaitFor;
 
 use crate::version::MongoDBVersion;
 
-mod version;
+pub mod version;
 
 pub struct MongoDBSandbox {
     testcontainers: Rc<Cli>,
@@ -21,7 +21,7 @@ pub struct MongoDBSandbox {
 }
 
 impl MongoDBSandbox {
-    fn new(version: MongoDBVersion) -> MongoDBSandbox {
+    pub fn new(version: MongoDBVersion) -> MongoDBSandbox {
         return MongoDBSandbox {
             testcontainers: Rc::new(Cli::default()),
             coll_documents: vec![],
@@ -30,7 +30,7 @@ impl MongoDBSandbox {
         }
     }
 
-    pub fn insert(&mut self, namespace: &'static str, docs: Vec<Document>) -> &Self {
+    pub fn insert(&mut self, namespace: &'static str, docs: Vec<Document>) -> &mut Self {
         docs.iter().for_each(|d| {
             self.coll_documents.push((namespace.to_string().parse().unwrap(), d.clone()));
         });
@@ -38,7 +38,7 @@ impl MongoDBSandbox {
         return self;
     }
 
-    pub fn create_index(&mut self, namespace: &'static str, docs: Vec<IndexModel>) -> &Self {
+    pub fn create_index(&mut self, namespace: &'static str, docs: Vec<IndexModel>) -> &mut Self {
         docs.iter().for_each(|d| {
             self.coll_indexes.push((namespace.to_string().parse().unwrap(), d.clone()));
         });

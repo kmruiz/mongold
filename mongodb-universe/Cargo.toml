@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 mongodb-query-language = { path = "../mongodb-query-language" }
 mongodb = { workspace = true }
+
+[dev-dependencies]
+mongodb-test-fixtures = { path = "../mongodb-test-fixtures" }
+test-case = { workspace = true }
