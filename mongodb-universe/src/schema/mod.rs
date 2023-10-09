@@ -1,7 +1,7 @@
 use std::error::Error;
+
 use mongodb::bson::Document;
 use mongodb::Namespace;
-use mongodb_query_language::values::Value;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum SchemaRegularIndexPredicate {

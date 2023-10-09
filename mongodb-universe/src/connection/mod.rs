@@ -1,10 +1,8 @@
 use std::collections::HashSet;
 use std::error::Error;
-use std::fmt::format;
 
 use mongodb::{IndexModel, Namespace};
 use mongodb::bson::{Bson, doc, Document};
-use mongodb::bson::Bson::Array;
 use mongodb::sync::{Client, Collection};
 
 use crate::schema::{InferSchema, Schema, SchemaRegularIndex};

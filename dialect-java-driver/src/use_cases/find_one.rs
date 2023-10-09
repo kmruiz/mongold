@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::error::Error;
 
-use tree_sitter::{Node, Tree};
+use tree_sitter::Tree;
 
 use mongodb_query_language::execution::{Execution, ExecutionNamespace};
 use mongodb_query_language::execution::Execution::FindOne;

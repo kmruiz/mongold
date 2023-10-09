@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::error::Error;
-use std::rc::Rc;
 use tree_sitter::Tree;
 use crate::filter::FilterOperator;
 
