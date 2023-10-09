@@ -10,6 +10,7 @@ use mongodb_query_language::values::Value::Reference;
 
 use crate::tree_ext::infer_mongodb_namespace::infer_mongodb_namespace;
 use crate::tree_ext::optional_node_to_string;
+use crate::tree_ext::predicate_from_driver_method::predicate_from_driver_method;
 
 const ALL_FIND_METHOD_CALLS: &str = include_str!("queries/find_one.all_finds.scm");
 const ALL_FIND_METHOD_CALLS_ARGUMENT_LIST: &str = include_str!("queries/find_one.all_finds.argument_list.scm");
@@ -61,13 +62,14 @@ pub fn find_one(tree: RefCell<Tree>, code: &String) -> Result<Vec<Execution>, Bo
                 }
             }
 
-            let field_name = optional_node_to_string(&coll_node, code);
+            let coll_field_name = optional_node_to_string(&coll_node, code);
+            let query_field_name = optional_node_to_string(&field_name_node, code);
+            let operation_name = optional_node_to_string(&operation_node, code);
+            let value = Reference(optional_node_to_string(&value_node, code), "any".to_string());
+
             result.push(FindOne {
-                namespace: namespaces.get(&*field_name).map(|x| x.clone()).unwrap_or(ExecutionNamespace::empty(field_name)),
-                predicate: Equals {
-                    field: optional_node_to_string(&field_name_node, code),
-                    value: Reference(optional_node_to_string(&value_node, code), "any".to_string())
-                }
+                namespace: namespaces.get(&*coll_field_name).map(|x| x.clone()).unwrap_or(ExecutionNamespace::empty(coll_field_name)),
+                predicate: predicate_from_driver_method(&operation_name, query_field_name, value)
             });
         }
     }
@@ -79,7 +81,7 @@ pub fn find_one(tree: RefCell<Tree>, code: &String) -> Result<Vec<Execution>, Bo
 mod test {
     use mongodb_query_language::execution::Execution::FindOne;
     use mongodb_query_language::execution::ExecutionNamespace;
-    use mongodb_query_language::filter::FilterOperator::Equals;
+    use mongodb_query_language::filter::FilterOperator::{Equals, GreaterThan};
     use mongodb_query_language::values::Value::Reference;
 
     use crate::Java;
@@ -149,6 +151,33 @@ mod test {
                 field: "_id".to_string(),
                 value: Reference("id".to_string(), "any".to_string())
             }
+        })
+    }
+
+    #[test]
+    fn parse_gt_query() {
+        let code = r#"
+        public class MyRepository {
+            private final Collection<Document> myMongoCollection;
+
+            public Document findOne(int age) {
+                return myMongoCollection.find(gt("age", age)).first();
+            }
+        }
+        "#.to_string();
+
+        let java = Java::new();
+        let tree = java.full_parse(&code);
+        let result = find_one(tree, &code).unwrap();
+
+        assert_eq!(result.len(), 1);
+        let FindOne { namespace: _, predicate} = &result[0] else {
+            panic!()
+        };
+
+        assert_eq!(*predicate, GreaterThan {
+            field: "age".to_string(),
+            value: Reference("age".to_string(), "any".to_string())
         })
     }
 }
